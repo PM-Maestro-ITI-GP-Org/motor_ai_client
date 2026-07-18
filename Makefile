@@ -14,22 +14,38 @@ export QNX_SDP_PATH
 
 SOMEIP_DIR := ../someip
 
-.PHONY: all client clean
+CLIENT_BIN  := client/build/MotorDataClient
+CLIENT_DEPS := client/CMakeLists.txt $(wildcard client/src/*) $(wildcard interface/*)
+
+.PHONY: all client clean FORCE
 
 all: client
 
-client:
-	@if [ "${FORCE_REBUILD:-0}" != "1" ] \
-	    && [ -f client/build/CMakeCache.txt ]; then \
-	    echo "MotorDataClient already built; skipping. (Set FORCE_REBUILD=1 to rebuild.)"; \
-	else \
-	    bash -c " \
-		source ${SOMEIP_DIR}/commonapi-qnx/scripts/env.sh && \
+client: $(CLIENT_BIN)
+
+# The old guard skipped the build whenever client/build/CMakeCache.txt existed, but
+# cmake writes that cache at *configure* time. An interrupted or failed compile left
+# the cache behind with no binary, and every later build then reported "already built"
+# while the IFS build died with "No rule to make target .../MotorDataClient".
+# Depending on the binary itself keeps the check honest and gives incremental rebuilds.
+$(CLIENT_BIN): $(CLIENT_DEPS)
+	bash -c " \
+		source $(SOMEIP_DIR)/commonapi-qnx/scripts/env.sh && \
 		cd client && \
 		cmake -B build -S . && \
 		cmake --build build \
-	"; \
-	fi
+	"
+	@test -f $@ || { echo "ERROR: build succeeded but $@ was not produced" >&2; exit 1; }
+
+# FORCE_REBUILD=1 forces a rebuild. This used to be spelled ${FORCE_REBUILD:-0} inside
+# the recipe, which make parses as a variable literally named "FORCE_REBUILD:-0" (a
+# substitution reference needs an '='), so it always expanded to empty and the flag
+# never had any effect.
+ifeq ($(FORCE_REBUILD),1)
+$(CLIENT_BIN): FORCE
+endif
+
+FORCE:
 
 clean:
 	rm -rf client/build
