@@ -1,0 +1,36 @@
+package commonapi
+
+interface MotorDataService {
+    version { major 0 minor 1 }
+
+    struct MotorRow {
+        UInt16 currentA
+        UInt16 currentB
+        UInt16 currentC
+        UInt16 voltageA
+        UInt16 voltageB
+        UInt16 voltageC
+        UInt16 voltageDcBus
+        UInt16 voltageSpeed
+        Int16  vibX
+        Int16  vibY
+        Int16  vibZ
+        UInt16 rpm
+    }
+
+    method sendBatch {
+        in {
+            UInt64           timestamp
+            UInt32           producerSeq
+            UInt16           flags
+            UInt32           blockRows
+            MotorRow[]       rows
+        }
+        out {
+            Boolean          accepted
+            String           anomalyResult
+            String           faultClassResult
+            String           predMaintResult
+        }
+    }
+}
