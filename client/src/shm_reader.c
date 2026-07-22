@@ -1,6 +1,6 @@
 #include "shm_reader.h"
-#include "../../../motor_data_producer/QNX-SPI/motor_wire.h"
-#include "../../../motor_data_producer/QNX-SPI/motor_shm.h"
+#include <motor_wire.h>
+#include <motor_shm.h>
 
 #include <stdlib.h>
 #include <string.h>

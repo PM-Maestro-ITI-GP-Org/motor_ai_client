@@ -27,3 +27,17 @@ not set explicitly.
 make                    # cmake configure + build
 make FORCE_REBUILD=1    # rebuild even if the binary looks current
 ```
+
+## Dependency: motor_data_producer
+
+`client/src/shm_reader.c` reads the producer's shared-memory region, so it needs
+`motor_wire.h` and `motor_shm.h` from **motor_data_producer** (`QNX-SPI/`).
+
+Those were included by relative path (`../../../motor_data_producer/QNX-SPI/...`),
+which only resolved while both sat in one tree. They are now plain
+`#include <motor_wire.h>`, so point the compiler at wherever that repository is
+checked out:
+
+```sh
+make CFLAGS=-I/path/to/motor_data_producer/QNX-SPI
+```
