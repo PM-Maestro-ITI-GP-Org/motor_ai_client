@@ -12,7 +12,9 @@ endif
 
 export QNX_SDP_PATH
 
-SOMEIP_DIR := ../someip
+# Path to the someip / CommonAPI tree, which lives in its own repository.
+# Override for a checkout anywhere:  make SOMEIP_DIR=/path/to/someip
+SOMEIP_DIR ?= ../someip
 
 CLIENT_BIN  := client/build/MotorDataClient
 CLIENT_DEPS := client/CMakeLists.txt $(wildcard client/src/*) $(wildcard interface/*)
