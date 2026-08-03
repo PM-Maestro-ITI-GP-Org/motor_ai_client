@@ -4,6 +4,7 @@ interface MotorDataService {
     version { major 0 minor 1 }
 
     struct MotorRow {
+        UInt64 timestamp
         UInt16 currentA
         UInt16 currentB
         UInt16 currentC

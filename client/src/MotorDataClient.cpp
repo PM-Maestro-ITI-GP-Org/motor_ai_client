@@ -27,6 +27,7 @@ void copyRows(const motor_block_copy_t &blk,
     for (uint16_t i = 0; i < blk.n_rows; ++i) {
         const motor_row_copy_t &src = blk.rows[i];
         MotorDataService::MotorRow row;
+        row.setTimestamp(src.timestamp);
         row.setCurrentA(src.current[0]);
         row.setCurrentB(src.current[1]);
         row.setCurrentC(src.current[2]);

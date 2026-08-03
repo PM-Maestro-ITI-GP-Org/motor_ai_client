@@ -1,6 +1,6 @@
 #include "shm_reader.h"
-#include <motor_wire.h>
-#include <motor_shm.h>
+#include "../../../motor_data_producer/QNX-SPI/motor_wire.h"
+#include "../../../motor_data_producer/QNX-SPI/motor_shm.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,8 +9,6 @@
 #include <sys/mman.h>
 #include <time.h>
 
-_Static_assert(sizeof(motor_row_copy_t) == sizeof(motor_row_t),
-               "motor_row_copy_t size mismatch vs motor_row_t");
 _Static_assert(SHM_READER_MAX_ROWS_PER_BLOCK == MOTOR_MAX_ROWS_PER_BLOCK,
                "SHM_READER_MAX_ROWS_PER_BLOCK mismatch vs MOTOR_MAX_ROWS_PER_BLOCK");
 
@@ -88,8 +86,22 @@ size_t shm_reader_poll_blocks(shm_reader_t *r,
             out->timestamp    = scratch.timestamp;
             out->n_rows       = scratch.n_rows;
             out->flags        = scratch.flags;
-            memcpy(out->rows, scratch.rows,
-                   (size_t)scratch.n_rows * sizeof(motor_row_t));
+            for (uint16_t i = 0; i < scratch.n_rows; ++i) {
+                motor_row_copy_t *dst = &out->rows[i];
+                dst->timestamp = scratch.row_ts[i];
+                dst->current[0] = scratch.rows[i].current[0];
+                dst->current[1] = scratch.rows[i].current[1];
+                dst->current[2] = scratch.rows[i].current[2];
+                dst->current[3] = scratch.rows[i].current[3];
+                dst->current[4] = scratch.rows[i].current[4];
+                dst->current[5] = scratch.rows[i].current[5];
+                dst->current[6] = scratch.rows[i].current[6];
+                dst->current[7] = scratch.rows[i].current[7];
+                dst->vib_x = scratch.rows[i].vib_x;
+                dst->vib_y = scratch.rows[i].vib_y;
+                dst->vib_z = scratch.rows[i].vib_z;
+                dst->rpm   = scratch.rows[i].rpm;
+            }
             written++;
         } else if (out_dropped_blocks) {
             (*out_dropped_blocks)++;

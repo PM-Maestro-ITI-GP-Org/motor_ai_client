@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 typedef struct {
+    uint64_t timestamp;
     uint16_t current[8];
     int16_t  vib_x;
     int16_t  vib_y;
