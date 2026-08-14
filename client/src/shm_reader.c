@@ -51,6 +51,12 @@ shm_reader_t *shm_reader_open(void)
     return r;
 }
 
+void shm_reader_resync(shm_reader_t *r)
+{
+    if (!r || r->region == (const shm_region_t *)MAP_FAILED) return;
+    r->read_pos = motor_ring_write_pos(&r->region->ring);
+}
+
 void shm_reader_close(shm_reader_t *r)
 {
     if (!r) return;

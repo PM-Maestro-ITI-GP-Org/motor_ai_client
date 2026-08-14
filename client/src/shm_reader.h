@@ -32,6 +32,16 @@ typedef struct shm_reader shm_reader_t;
 shm_reader_t *shm_reader_open(void);
 void shm_reader_close(shm_reader_t *r);
 
+/* Skip whatever the producer wrote while nobody was reading, and start from
+ * what it writes next.
+ *
+ * The read position is set when the reader is opened, so any stretch where the
+ * caller is not polling -- waiting for the AI server to appear, or blocked in
+ * a call to one that went away -- leaves it pointing at data the ring has long
+ * since lapped. Without this the next poll reports every one of those blocks
+ * as dropped, which reads as a performance fault and is really just the gap. */
+void shm_reader_resync(shm_reader_t *r);
+
 size_t shm_reader_poll_blocks(shm_reader_t *r,
                                motor_block_copy_t *out_blocks,
                                size_t max_blocks,
