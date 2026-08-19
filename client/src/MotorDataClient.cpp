@@ -158,17 +158,16 @@ bool sendWindow(MotorDataServiceProxy<> &proxy,
 {
     if (window.empty()) return true;
 
-    // The window's own start time, taken from its first row rather than from
-    // the block that happened to complete it. Rows carry a timestamp each now,
-    // and "when this window begins" is the question the server writes into
-    // batch_timestamp.
+    // The window's start time, taken from its first row. Only the local result
+    // shm still records it alongside the verdicts; the wire to the server
+    // carries just the rows, since the node reads its time from each row.
     const uint64_t windowTimestamp = window.front().getTimestamp();
 
     CommonAPI::CallStatus callStatus;
     bool accepted = false;
     std::string anomalyResult, faultClassResult, predMaintResult;
 
-    proxy.sendBatch(windowTimestamp, producerSeq, flags, blockRows, window,
+    proxy.sendBatch(blockRows, window,
                     callStatus, accepted,
                     anomalyResult, faultClassResult, predMaintResult,
                     &callInfo);

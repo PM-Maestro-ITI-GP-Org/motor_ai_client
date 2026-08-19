@@ -21,9 +21,6 @@ interface MotorDataService {
 
     method sendBatch {
         in {
-            UInt64           timestamp
-            UInt32           producerSeq
-            UInt16           flags
             UInt32           blockRows
             MotorRow[]       rows
         }
