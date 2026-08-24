@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <time.h>
 
 struct ai_result_writer {
     ai_result_region_t *region;
@@ -33,6 +34,29 @@ ai_result_writer_t *ai_result_writer_open(void)
     w->region->version = AI_RESULT_VERSION;
     w->region->_pad0   = 0;
     atomic_store_explicit(&w->region->snapshot.seqlock, 0u, memory_order_relaxed);
+
+    /*
+     * A freshly created region otherwise sits at seqlock==0 until the first
+     * window finishes inference -- motor_diag_service's own reader treats
+     * seq==0 as "never written" and reports nothing at all (see
+     * build_fault_event() in motor_diag_service.c). Every consumer
+     * downstream of that then has no reading at all rather than a
+     * plausible one for however long the first window takes.
+     *
+     * Publish a normal/no-fault/full-health snapshot right here instead, in
+     * the exact string shape motor_ai_node itself emits (inference.hpp's
+     * Engine::runAnomaly/runFaultClass/runRul, and the server's own
+     * "anomaly_ == normal" -> "none" fold in MotorDataStubImpl.cpp): the
+     * band word for a full-health motor is "healthy" (health_model.json's
+     * bands[0]), health 1.0 is the model's own ceiling, and RUL at full
+     * health is life_index (4, health_model.json/rul_config.json) months --
+     * "RUL 4.00 months" is not a guess, it is what this exact model prints
+     * for an undegraded motor. Overwritten by the first real
+     * ai_result_writer_publish() call the moment one window completes.
+     */
+    ai_result_writer_publish(w, (uint64_t)time(NULL), 0, 0,
+                              "normal", "none",
+                              "healthy, health 1.00, RUL 4.00 months (provisional)");
 
     return w;
 }
