@@ -185,7 +185,20 @@ bool sendWindow(MotorDataServiceProxy<> &proxy,
     // The three verdicts go into the result shm the same way the producer's
     // rows come out of its own: one writer, seqlock, readers take a consistent
     // snapshot. That is what the cluster reads.
-    if (resultWriter) {
+    //
+    // "unknown" is skipped rather than published: the model only classifies a
+    // moving motor, so every window sent while it sits idle comes back
+    // "unknown" on all three fields -- not a fault, not a fresh verdict, just
+    // "nothing to say this time". Publishing it anyway overwrote the last real
+    // classification with that non-answer on every idle window, which is what
+    // made motor_diag_service's reader treat the whole pipeline as having
+    // nothing to report and the head unit call it offline, even seconds after
+    // a real "healthy" or fault verdict had come back. Leaving the shm alone
+    // here means it keeps showing the last real verdict through an idle
+    // stretch instead of flapping to "no data" -- the same reason a car's
+    // dash keeps showing the last odometer reading rather than blanking it
+    // between key-on events.
+    if (resultWriter && anomalyResult != "unknown") {
         ai_result_writer_publish(resultWriter,
                                  windowTimestamp, producerSeq, flags,
                                  anomalyResult.c_str(),
